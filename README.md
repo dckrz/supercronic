@@ -247,21 +247,6 @@ time="2019-01-12T19:35:00+09:00" level=info msg="hello from Supercronic" channel
 time="2019-01-12T19:35:00+09:00" level=info msg="job succeeded" iteration=0 job.command="echo \"hello from Supercronic\"" job.position=0 job.schedule="*/5 * * * * * *"
 ```
 
-## Integrations
-
-### Sentry
-
-Report errors to Sentry by passing a Sentry DSN:
-
-```
-$ ./supercronic -sentry-dsn DSN
-```
-
-You can also specify the DSN via the `SENTRY_DSN` environment variable.
-When a DSN is specified via both the environment variable and the command line parameter
-the parameter's DSN has priority.
-
-
 ## Questions and Support ###
 
 Please feel free to open an issue in this repository if you have any question

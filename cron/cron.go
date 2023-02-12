@@ -13,8 +13,6 @@ import (
 	"time"
 
 	"github.com/dckrz/supercronic/crontab"
-	"github.com/dckrz/supercronic/prometheus_metrics"
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )
 
@@ -122,7 +120,7 @@ func runJob(cronCtx *crontab.Context, command string, jobLogger *logrus.Entry, p
 	return nil
 }
 
-func monitorJob(ctx context.Context, job *crontab.Job, t0 time.Time, jobLogger *logrus.Entry, overlapping bool, promMetrics *prometheus_metrics.PrometheusMetrics) {
+func monitorJob(ctx context.Context, job *crontab.Job, t0 time.Time, jobLogger *logrus.Entry, overlapping bool) {
 	t := t0
 
 	for {
@@ -136,8 +134,6 @@ func monitorJob(ctx context.Context, job *crontab.Job, t0 time.Time, jobLogger *
 			}
 
 			jobLogger.Warnf("%s: job is still running since %s (%s elapsed)", m, t0, t.Sub(t0))
-
-			promMetrics.CronsDeadlineExceededCounter.With(jobPromLabels(job)).Inc()
 		case <-ctx.Done():
 			return
 		}
@@ -222,38 +218,19 @@ func StartJob(
 	cronLogger *logrus.Entry,
 	overlapping bool,
 	passthroughLogs bool,
-	promMetrics *prometheus_metrics.PrometheusMetrics,
 ) {
 	runThisJob := func(t0 time.Time, jobLogger *logrus.Entry) {
-		promMetrics.CronsCurrentlyRunningGauge.With(jobPromLabels(job)).Inc()
-
-		defer func() {
-			promMetrics.CronsCurrentlyRunningGauge.With(jobPromLabels(job)).Dec()
-		}()
-
 		monitorCtx, cancelMonitor := context.WithCancel(context.Background())
 		defer cancelMonitor()
 
-		go monitorJob(monitorCtx, job, t0, jobLogger, overlapping, promMetrics)
-
-		timer := prometheus.NewTimer(prometheus.ObserverFunc(func(v float64) {
-			promMetrics.CronsExecutionTimeHistogram.With(jobPromLabels(job)).Observe(v)
-		}))
-
-		defer timer.ObserveDuration()
+		go monitorJob(monitorCtx, job, t0, jobLogger, overlapping)
 
 		err := runJob(cronCtx, job.Command, jobLogger, passthroughLogs)
 
-		promMetrics.CronsExecCounter.With(jobPromLabels(job)).Inc()
-
 		if err == nil {
 			jobLogger.Info("job succeeded")
-
-			promMetrics.CronsSuccessCounter.With(jobPromLabels(job)).Inc()
 		} else {
 			jobLogger.Error(err)
-
-			promMetrics.CronsFailCounter.With(jobPromLabels(job)).Inc()
 		}
 	}
 
@@ -266,12 +243,4 @@ func StartJob(
 		cronCtx.Timezone,
 		runThisJob,
 	)
-}
-
-func jobPromLabels(job *crontab.Job) prometheus.Labels {
-	return prometheus.Labels{
-		"position": fmt.Sprintf("%d", job.Position),
-		"command":  job.Command,
-		"schedule": job.Schedule,
-	}
 }

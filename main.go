@@ -8,13 +8,10 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
-	"time"
 
 	"github.com/dckrz/supercronic/cron"
 	"github.com/dckrz/supercronic/crontab"
 	"github.com/dckrz/supercronic/log/hook"
-	"github.com/dckrz/supercronic/prometheus_metrics"
-	"github.com/evalphobia/logrus_sentry"
 	"github.com/sirupsen/logrus"
 )
 
@@ -28,33 +25,10 @@ func main() {
 	quiet := flag.Bool("quiet", false, "do not log informational messages (takes precedence over debug)")
 	json := flag.Bool("json", false, "enable JSON logging")
 	test := flag.Bool("test", false, "test crontab (does not run jobs)")
-	prometheusListen := flag.String(
-		"prometheus-listen-address",
-		"",
-		fmt.Sprintf(
-			"give a valid ip[:port] address to expose Prometheus metrics at /metrics (port defaults to %s), "+
-				"use 0.0.0.0 for all network interfaces.",
-			prometheus_metrics.DefaultPort,
-		),
-	)
 	splitLogs := flag.Bool("split-logs", false, "split log output into stdout/stderr")
 	passthroughLogs := flag.Bool("passthrough-logs", false, "passthrough logs from commands, do not wrap them in Supercronic logging")
-	sentry := flag.String("sentry-dsn", "", "enable Sentry error logging, using provided DSN")
-	sentryAlias := flag.String("sentryDsn", "", "alias for sentry-dsn")
 	overlapping := flag.Bool("overlapping", false, "enable tasks overlapping")
 	flag.Parse()
-
-	var sentryDsn string
-
-	sentryDsn = os.Getenv("SENTRY_DSN")
-
-	if *sentryAlias != "" {
-		sentryDsn = *sentryAlias
-	}
-
-	if *sentry != "" {
-		sentryDsn = *sentry
-	}
 
 	if *debug {
 		logrus.SetLevel(logrus.DebugLevel)
@@ -85,44 +59,7 @@ func main() {
 
 	crontabFileName := flag.Args()[0]
 
-	var sentryHook *logrus_sentry.SentryHook
-	if sentryDsn != "" {
-		sentryLevels := []logrus.Level{
-			logrus.PanicLevel,
-			logrus.FatalLevel,
-			logrus.ErrorLevel,
-		}
-		sh, err := logrus_sentry.NewSentryHook(sentryDsn, sentryLevels)
-		if err != nil {
-			logrus.Fatalf("Could not init sentry logger: %s", err)
-		} else {
-			sh.Timeout = 5 * time.Second
-			sentryHook = sh
-		}
-
-		if sentryHook != nil {
-			logrus.StandardLogger().AddHook(sentryHook)
-		}
-	}
-
-	promMetrics := prometheus_metrics.NewPrometheusMetrics()
-
-	if *prometheusListen != "" {
-		promServerShutdownClosure, err := prometheus_metrics.InitHTTPServer(*prometheusListen, context.Background())
-		if err != nil {
-			logrus.Fatalf("prometheus http startup failed: %s", err.Error())
-		}
-
-		defer func() {
-			if err := promServerShutdownClosure(); err != nil {
-				logrus.Fatalf("prometheus http shutdown failed: %s", err.Error())
-			}
-		}()
-	}
-
 	for true {
-		promMetrics.Reset()
-
 		logrus.Infof("read crontab: %s", crontabFileName)
 		tab, err := readCrontabAtPath(crontabFileName)
 
@@ -147,7 +84,7 @@ func main() {
 				"job.position": job.Position,
 			})
 
-			cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger, *overlapping, *passthroughLogs, &promMetrics)
+			cron.StartJob(&wg, tab.Context, job, exitCtx, cronLogger, *overlapping, *passthroughLogs)
 		}
 
 		termChan := make(chan os.Signal, 1)
