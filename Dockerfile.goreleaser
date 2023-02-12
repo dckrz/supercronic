@@ -1,0 +1,19 @@
+ARG VERSION
+
+FROM gcr.io/distroless/static
+COPY supercronic /
+USER nonroot
+ENTRYPOINT ["/supercronic"]
+CMD ['/crontab']
+
+LABEL \
+      maintainer="Hosh Sadiq" \
+      org.opencontainers.image.authors="Hosh Sadiq" \
+      org.opencontainers.image.description="Cron for containers" \
+      org.opencontainers.image.documentation="https://github.com/dckrz/supercronic" \
+      org.opencontainers.image.licenses="MIT License" \
+      org.opencontainers.image.revision=$VERSION \
+      org.opencontainers.image.version=$VERSION \
+      org.opencontainers.image.source="https://github.com/dckrz/supercronic" \
+      org.opencontainers.image.title="Supercronic" \
+      org.opencontainers.image.url="https://github.com/dckrz/supercronic"

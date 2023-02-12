@@ -83,7 +83,6 @@ go mod vendor
 go install
 ```
 
-
 ## Crontab format ##
 
 Broadly speaking, Supercronic tries to process crontabs just like Vixie cron
@@ -113,7 +112,6 @@ Here's an example crontab:
 @hourly echo "$SOME_HOURLY_JOB"
 ```
 
-
 ## Environment variables ##
 
 Just like regular cron, Supercronic lets you specify environment variables in
@@ -134,7 +132,6 @@ SOME_VARIABLE=SOME_VALUE`).
 Unless you've used cron before, this is exactly how you expect environment
 variables to work!
 
-
 ## Timezone ##
 
 Supercronic uses your current timezone from `/etc/localtime` to schedule jobs.
@@ -149,7 +146,6 @@ crontab.
 
 If you're unsure what timezone Supercronic is using, you can run it with the
 `-debug` flag to confirm.
-
 
 ## Logging ##
 
@@ -170,7 +166,6 @@ INFO[2017-07-10T19:40:55+02:00] hello from Supercronic                        ch
 INFO[2017-07-10T19:40:55+02:00] job succeeded                                 iteration=1 job.command="echo "hello from Supercronic"" job.position=0 job.schedule="*/5 * * * * * *"
 ```
 
-
 ## Debugging ##
 
 If your jobs aren't running, or you'd simply like to double-check your crontab
@@ -182,7 +177,6 @@ INFO[2017-07-10T19:43:51+02:00] read crontab: ./my-crontab
 DEBU[2017-07-10T19:43:51+02:00] try parse(7): */5 * * * * * * echo "hello from Supercronic"[0:15] = */5 * * * * * *
 DEBU[2017-07-10T19:43:51+02:00] job will run next at 2017-07-10 19:44:00 +0200 CEST  job.command="echo "hello from Supercronic"" job.position=0 job.schedule="*/5 * * * * * *"
 ```
-
 
 ## Duplicate Jobs ##
 

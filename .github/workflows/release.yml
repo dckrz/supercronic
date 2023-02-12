@@ -1,27 +1,55 @@
-name: release
+name: Release
 
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - 'v*'
+
+env:
+  DOCKER_CLI_EXPERIMENTAL: enabled
 
 jobs:
-  publish:
+  goreleaser:
     runs-on: ubuntu-latest
-
     steps:
-    - name: install golang
-      uses: actions/setup-go@v2
-      with:
-        go-version: 1.18.x
+      - name: Checkout
+        uses: actions/checkout@v2
 
-    - name: checkout code
-      uses: actions/checkout@v2
+      - name: Wait for tests to succeed
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          WAIT_BRANCH: ${{ github.event.repository.default_branch }}
+          WAIT_SHA: ${{ github.sha }}
+          WAIT_EVENT: push
+          WAIT_WORKFLOW_NAME: Validate
+        run: ./.github/wait-for-workflow.sh
 
-    - name: build assets
-      run: make release
+      - name: Unshallow
+        run: git fetch --prune --unshallow
 
-    - name: gh login
-      run:  echo ${{ secrets.GITHUB_TOKEN }} | gh auth login --with-token
+      - name: Allow arm Docker builds # https://github.com/linuxkit/linuxkit/tree/master/pkg/binfmt
+        run: sudo docker run --privileged linuxkit/binfmt:v0.8
 
-    - name: upload assets to release
-      run: gh release upload ${{ github.event.release.tag_name }} dist/*
+      - name: Import GPG key
+        id: import_gpg
+        run: |
+          echo -e "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --import --batch --no-tty
+          printf "%s:6:\n" "${{ vars.GPG_FINGERPRINT }}" | gpg --import-ownertrust
+
+      - name: Github Docker login
+        run: echo ${{ secrets.GITHUB_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+      - name: setup go
+        run: curl -sl https://raw.githubusercontent.com/maxatome/install-go/v3.3/install-go.pl | perl - "$(awk '/^go/{print $2}' go.mod)" $HOME
+
+      - run: git status
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v3
+        with:
+          version: latest
+          args: release --config .goreleaser.yaml
+        env:
+          GPG_FINGERPRINT: ${{ vars.GPG_FINGERPRINT }}
+          GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

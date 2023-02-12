@@ -26,7 +26,6 @@ import (
 // A Expression represents a specific cron time expression as defined at
 // <https://github.com/dckrz/supercronic/cronexpr#implementation>
 type Expression struct {
-	expression             string
 	secondList             []int
 	minuteList             []int
 	hourList               []int

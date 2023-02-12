@@ -1,0 +1,137 @@
+name: Validate
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+
+env:
+  GO111MODULE: on
+
+jobs:
+  DetermineVersion:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - id: go-version
+        run: |
+          go_version="$(awk '/^go/{print $2}' go.mod)"
+          echo "go_version=${go_version}.x" >> $GITHUB_OUTPUT
+          golangci_version="$(yq '.repos[] | select(.repo | contains("golangci-lint")) | .rev' .pre-commit-config.yaml)"
+          echo "golangci_version=$golangci_version" >> $GITHUB_OUTPUT
+    outputs:
+      go_version: ${{ steps.go-version.outputs.go_version }}
+      golangci_version: ${{ steps.go-version.outputs.golangci_version }}
+
+  Pre-Commit:
+    needs: DetermineVersion
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v3
+      - name: Setup go
+        run: curl -sL https://raw.githubusercontent.com/maxatome/install-go/v3.3/install-go.pl | perl - ${{ needs.DetermineVersion.outputs.go_version }} $HOME
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/Library/Caches/go-build
+            ~/AppData/Local/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ needs.DetermineVersion.outputs.go_version }}-${{ hashFiles('**/go.sum') }}
+          restore-keys: go-mod
+      - uses: pre-commit/action@v3.0.0
+        env:
+          SKIP: golangci-lint
+
+  GolangCI-Lint:
+    needs: DetermineVersion
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup go
+        run: curl -sL https://raw.githubusercontent.com/maxatome/install-go/v3.3/install-go.pl | perl - ${{ needs.DetermineVersion.outputs.go_version }} $HOME
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/Library/Caches/go-build
+            ~/AppData/Local/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ needs.DetermineVersion.outputs.go_version }}-${{ hashFiles('**/go.sum') }}
+          restore-keys: go-mod
+      - name: Run linters
+        uses: golangci/golangci-lint-action@v3
+        with:
+          version: ${{ needs.DetermineVersion.outputs.golangci_version }}
+
+  Vet:
+    needs: DetermineVersion
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup go
+        run: curl -sL https://raw.githubusercontent.com/maxatome/install-go/v3.3/install-go.pl | perl - ${{ needs.DetermineVersion.outputs.go_version }} $HOME
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/Library/Caches/go-build
+            ~/AppData/Local/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ needs.DetermineVersion.outputs.go_version }}-${{ hashFiles('**/go.sum') }}
+          restore-keys: go-mod
+      - name: Run vet
+        run: go vet
+
+  Test:
+    name: Tests
+    needs: DetermineVersion
+    runs-on: ubuntu-latest
+    steps:
+      - name: Setup go
+        run: curl -sL https://raw.githubusercontent.com/maxatome/install-go/v3.3/install-go.pl | perl - ${{ needs.DetermineVersion.outputs.go_version }} $HOME
+      - name: Checkout code
+        uses: actions/checkout@v3
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/Library/Caches/go-build
+            ~/AppData/Local/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ matrix.go }}-${{ hashFiles('**/go.sum') }}
+          restore-keys: go-mod
+      - name: install bats
+        run: |
+          git clone https://github.com/bats-core/bats-core.git --branch v1.9.0 --depth 1 "${HOME}/bats"
+          echo "${HOME}/bats/bin" >> $GITHUB_PATH
+      - name: Run tests
+        run: make test
+
+  GoReleaser:
+    needs: DetermineVersion
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_CLI_EXPERIMENTAL: enabled
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Unshallow
+        run: git fetch --prune --unshallow
+
+      - name: Allow arm Docker builds # https://github.com/linuxkit/linuxkit/tree/master/pkg/binfmt
+        run: sudo docker run --privileged linuxkit/binfmt:v0.8
+
+      - name: setup go
+        run: curl -sl https://raw.githubusercontent.com/maxatome/install-go/v3.3/install-go.pl | perl - ${{ needs.determineversion.outputs.go_version }} $home
+
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v3
+        with:
+          version: latest
+          args: release --config .goreleaser.yaml --rm-dist --skip-publish --skip-sign --snapshot

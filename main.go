@@ -61,7 +61,7 @@ func main() {
 
 	crontabFileName := fs.Args()[0]
 
-	for true {
+	for {
 		logrus.Infof("read crontab: %s", crontabFileName)
 		tab, err := readCrontabAtPath(crontabFileName)
 

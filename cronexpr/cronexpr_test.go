@@ -366,6 +366,6 @@ func BenchmarkNext(b *testing.B) {
 		next = expr.Next(next)
 		next = expr.Next(next)
 		next = expr.Next(next)
-		next = expr.Next(next)
+		expr.Next(next)
 	}
 }
