@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/aptible/supercronic/cronexpr"
+	"github.com/dckrz/supercronic/cronexpr"
 	"github.com/sirupsen/logrus"
 )
 

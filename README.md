@@ -1,4 +1,4 @@
-# ![][aptible-logo] Supercronic #
+# Supercronic #
 
 > Supercronic has an [announcement blog post over here][blog-post]!
 
@@ -77,8 +77,8 @@ Run the following to fetch Supercronic, install its dependencies, and install
 it:
 
 ```
-go get -d github.com/aptible/supercronic
-cd "${GOPATH}/src/github.com/aptible/supercronic"
+go get -d github.com/dckrz/supercronic
+cd "${GOPATH}/src/github.com/dckrz/supercronic"
 go mod vendor
 go install
 ```
@@ -267,10 +267,6 @@ the parameter's DSN has priority.
 Please feel free to open an issue in this repository if you have any question
 about Supercronic!
 
-Note that if you're trying to use Supercronic on Aptible Enclave, we have [a
-dedicated support article][how-to-run-scheduled-tasks].
-
-
 ## Contributing ##
 
 PRs are always welcome! Before undertaking a major change, consider opening an
@@ -286,10 +282,10 @@ See [LICENSE.md](./LICENSE.md).
 
 Copyright (c) 2019 [Aptible][aptible]. All rights reserved.
 
-  [aptible-logo]: https://raw.github.com/aptible/straptible/master/lib/straptible/rails/templates/public.api/icon-60px.png
+  [aptible-logo]: https://raw.github.com/dckrz/straptible/master/lib/straptible/rails/templates/public.api/icon-60px.png
   [blog-post]: https://www.aptible.com/blog/cron-for-containers-introduction-supercronic
-  [cronexpr]: https://github.com/aptible/supercronic/tree/master/cronexpr
-  [releases]: https://github.com/aptible/supercronic/releases
+  [cronexpr]: https://github.com/dckrz/supercronic/tree/master/cronexpr
+  [releases]: https://github.com/dckrz/supercronic/releases
   [dep]: https://github.com/golang/dep
   [aptible]: https://www.aptible.com
   [aptible-enclave]: https://www.aptible.com/enclave

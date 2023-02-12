@@ -1,7 +1,7 @@
-module github.com/aptible/supercronic/cronexpr/cronexpr
+module github.com/dckrz/supercronic/cronexpr/cronexpr
 
 go 1.18
 
-replace github.com/aptible/supercronic => ../../
+replace github.com/dckrz/supercronic => ../../
 
-require github.com/aptible/supercronic v0.0.0-00010101000000-000000000000
+require github.com/dckrz/supercronic v0.0.0-00010101000000-000000000000

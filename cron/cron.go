@@ -12,8 +12,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/aptible/supercronic/crontab"
-	"github.com/aptible/supercronic/prometheus_metrics"
+	"github.com/dckrz/supercronic/crontab"
+	"github.com/dckrz/supercronic/prometheus_metrics"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/sirupsen/logrus"
 )

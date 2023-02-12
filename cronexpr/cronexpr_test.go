@@ -1,7 +1,7 @@
 /*!
  * Copyright 2013 Raymond Hill
  *
- * Project: github.com/aptible/supercronic/cronexpr
+ * Project: github.com/dckrz/supercronic/cronexpr
  * File: cronexpr_test.go
  * Version: 1.0
  * License: pick the one which suits you best:
@@ -305,7 +305,7 @@ func TestInterval_Interval60Issue(t *testing.T) {
 	}
 }
 
-// Issue: https://github.com/aptible/supercronic/issues/63
+// Issue: https://github.com/dckrz/supercronic/issues/63
 func TestRange_OutOfOrder(t *testing.T) {
 	_, err := Parse("45 4 *  *  6-7")
 	if err == nil {
