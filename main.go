@@ -15,20 +15,22 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var Usage = func() {
-	fmt.Fprintf(os.Stderr, "Usage: %s [OPTIONS] CRONTAB\n\nAvailable options:\n", os.Args[0])
-	flag.PrintDefaults()
-}
-
 func main() {
-	debug := flag.Bool("debug", false, "enable debug logging")
-	quiet := flag.Bool("quiet", false, "do not log informational messages (takes precedence over debug)")
-	json := flag.Bool("json", false, "enable JSON logging")
-	test := flag.Bool("test", false, "test crontab (does not run jobs)")
-	splitLogs := flag.Bool("split-logs", false, "split log output into stdout/stderr")
-	passthroughLogs := flag.Bool("passthrough-logs", false, "passthrough logs from commands, do not wrap them in Supercronic logging")
-	overlapping := flag.Bool("overlapping", false, "enable tasks overlapping")
-	flag.Parse()
+	fs := flag.NewFlagSet(os.Args[0], flag.ExitOnError)
+
+	debug := fs.Bool("debug", false, "enable debug logging")
+	quiet := fs.Bool("quiet", false, "do not log informational messages (takes precedence over debug)")
+	json := fs.Bool("json", false, "enable JSON logging")
+	test := fs.Bool("test", false, "test crontab (does not run jobs)")
+	splitLogs := fs.Bool("split-logs", false, "split log output into stdout/stderr")
+	passthroughLogs := fs.Bool("passthrough-logs", false, "passthrough logs from commands, do not wrap them in Supercronic logging")
+	overlapping := fs.Bool("overlapping", false, "enable tasks overlapping")
+
+	fs.Usage = func() {
+		fmt.Fprintf(fs.Output(), "Usage: %s [OPTIONS] CRONTAB\n\nAvailable options:\n", os.Args[0])
+		fs.PrintDefaults()
+	}
+	_ = fs.Parse(os.Args[1:])
 
 	if *debug {
 		logrus.SetLevel(logrus.DebugLevel)
@@ -51,13 +53,13 @@ func main() {
 		)
 	}
 
-	if flag.NArg() != 1 {
-		Usage()
+	if fs.NArg() != 1 {
+		fs.Usage()
 		os.Exit(2)
 		return
 	}
 
-	crontabFileName := flag.Args()[0]
+	crontabFileName := fs.Args()[0]
 
 	for true {
 		logrus.Infof("read crontab: %s", crontabFileName)
