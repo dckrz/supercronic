@@ -42,8 +42,6 @@ jobs:
       - name: setup go
         run: curl -sl https://raw.githubusercontent.com/maxatome/install-go/v3.3/install-go.pl | perl - "$(awk '/^go/{print $2}' go.mod)" $HOME
 
-      - run: git status
-
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v3
         with:
